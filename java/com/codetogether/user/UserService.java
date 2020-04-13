@@ -37,4 +37,5 @@ public interface UserService {
 	void verify(UserVO uservo);
 
 	void tempPassword(UserVO vo);
+
 }

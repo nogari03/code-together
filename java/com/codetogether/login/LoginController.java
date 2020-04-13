@@ -10,19 +10,19 @@ import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.social.google.connect.GoogleConnectionFactory;
-import org.springframework.social.oauth2.GrantType;
-import org.springframework.social.oauth2.OAuth2Operations;
-import org.springframework.social.oauth2.OAuth2Parameters;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.util.WebUtils;
 
+import com.codetogether.auth.JwtService;
 import com.codetogether.auth.SnsDTO;
 import com.codetogether.auth.SnsLogin;
 import com.codetogether.user.UserController;
@@ -38,63 +38,47 @@ public class LoginController {
 	@Autowired
 	private UserService service;
 	@Autowired
-	private GoogleConnectionFactory googleConnectionFactory;
-	@Autowired
-	private OAuth2Parameters googleOAuth2Parameters;
+	private JwtService jwtservice;
 	@Inject
 	private SnsDTO naverSns;
-	@Inject
-	private SnsDTO googleSns;
 
 
-	// 로그인 페이지
 	@RequestMapping(value = "/login", method = RequestMethod.GET)
 	public String login() throws Exception {
-		return "/loginForm";
+		return "/static/index";
 	}
 
-	//로그인 (폼데이터)
+	// 로그인
 	@RequestMapping(value = "/login.do", method = RequestMethod.POST)
-	public ModelAndView loginPOST(LoginDTO dto, HttpServletResponse response, HttpSession session) throws Exception {
+	@ResponseStatus(HttpStatus.OK)
+	@ResponseBody
+	public ModelAndView loginPOST(@RequestBody LoginDTO dto) throws Exception {
+
 		ModelAndView mav = new ModelAndView();
+		mav.setViewName("jsonView");
 
-		// 유효한 회원인지 ( valid = 1 ) 검증
 		if(service.checkValid(dto.getEmail()) == 0 ) {
-			// valid가 0인관계로 로그인 실패
 			mav.addObject("msg", "유효한 회원이 아닙니다.");
-			mav.setViewName("redirect:/loginForm");
-			//mav.setStatus(""); //스테이터스 같이 보낼것
 			return mav;
 		}
 
-		//로그인
-		UserVO userPw = service.select(dto);
+		UserVO userInfo = service.select(dto);
 
-		// 비밀번호 검증
-		if (dto == null || !BCrypt.checkpw(dto.getPassword(), userPw.getPassword())){
-			mav.addObject("msg", "비밀번호가 입력을 올바르게 해주세요.");
-			mav.setViewName("redirect:/loginForm");
+		if (dto == null || !BCrypt.checkpw(dto.getPassword(), userInfo.getPassword())){
+			mav.addObject("msg", "비밀번호 입력을 올바르게 해주세요.");
 			return mav;
 		}
 
-		// 세션값을 부여
-		session.setAttribute("login", dto);
+		String token = jwtservice.createToken(dto); //jwt에 이메일 정보 담아서 보내기(test)
 
-		//쿠키사용이 TRUE 일경우
-		if( dto.isUseCookie() ) {
-			Cookie cookie = new Cookie("cookie", session.getId());
-			cookie.setPath("/");
-			cookie.setMaxAge(60*60*24*7); //쿠키 시간
-			response.addCookie(cookie);
-			}
-
-		mav.addObject("msg", "로그인 성공!");
-		mav.setViewName("redirect:/");
+		mav.addObject("msg", "로그인에 성공하였습니다!");
+		mav.addObject("token",token);
+		mav.addObject("member_id",userInfo.getMember_id());
 
 		return mav;
-		}
+	}
 
-	// 로그아웃
+	// 로그아웃 (수정해야함)
 	@RequestMapping("/logout.do")
 	public String logout(HttpSession session, HttpServletRequest request,HttpServletResponse response) {
 
@@ -119,48 +103,55 @@ public class LoginController {
 
 
 	@RequestMapping(value = "/auth/{snsService}/callback")
-	public String naverCallback(@PathVariable String snsService,
-			Model model, @RequestParam String code, HttpSession session) throws Exception {
+	@ResponseBody
+	public ModelAndView naverCallback(@PathVariable String snsService,
+		   @RequestParam String code, HttpSession session) throws Exception {
 
 		logger.info("snsLoginCallback: service={}", snsService);
 
-		SnsDTO sns = null;
-		if (snsService.equalsIgnoreCase("naver")) {
-			sns = naverSns;
-		} else {
-			sns = googleSns;
-		}
+		SnsDTO sns = naverSns;
+		snsService.equalsIgnoreCase("naver");
 
 		SnsLogin snsLogin = new SnsLogin(sns);
 		UserVO snsUser = snsLogin.getUserProfile(code);
 		System.out.println("Profile>>" + snsUser);
 
 		UserVO uservo = service.getBySns(snsUser);
+		ModelAndView mav = new ModelAndView();
 
 		if ( uservo == null) {
-			model.addAttribute("result", "존재하지 않는 사용자입니다. 가입해 주세요.");
+
+			mav.addObject("result", "SNS로그인! 추가정보를 입력해 주세요.");
+			mav.addObject("","");
+			mav.addObject(snsUser.getNaver_email()); //
+			mav.setViewName("/user/snsForm");
+			return mav;
 
 		} else {
-			model.addAttribute("result", uservo.getName() + "님 반갑습니다.");
-			session.setAttribute("login", uservo);
-
-
+			mav.addObject("result", "로그인 완료! 반갑습니다.");
 		}
 
-		return "/login/loginResult";
+		mav.setViewName("/");
+		return mav;
 	}
 
-	// 로그인 폼
-	@RequestMapping(value = "/loginForm")
-	public String loginForm(Model model) throws Exception {
-
-		SnsLogin naverLogin = new SnsLogin(naverSns);
-		model.addAttribute("naver_url", naverLogin.getNaverAuthURL());
-
-		OAuth2Operations oauthOperations = googleConnectionFactory.getOAuthOperations();
-		String url = oauthOperations.buildAuthorizeUrl(GrantType.AUTHORIZATION_CODE,googleOAuth2Parameters);
-
-		model.addAttribute("google_url", url);
-		return "/login/loginForm";
-	}
 }
+
+
+// 세션 및 쿠키 -> JWT 사용으로 주석
+//
+//session.setAttribute("login", dto);
+//
+////쿠키사용이 TRUE 일경우
+//if( dto.isUseCookie() ) {
+//	Cookie cookie = new Cookie("cookie", session.getId());
+//	cookie.setPath("/");
+//	cookie.setMaxAge(60*60*24*7); //쿠키 시간
+//	response.addCookie(cookie);
+//	}
+//
+//mav.addObject("msg", "로그인 성공!");
+//mav.setViewName("redirect:/");
+//
+//return mav;
+//}

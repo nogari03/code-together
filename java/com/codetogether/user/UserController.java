@@ -7,14 +7,20 @@ import javax.inject.Inject;
 import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.codetogether.auth.SnsDTO;
+import com.codetogether.auth.SnsLogin;
 import com.codetogether.login.LoginDTO;
 
 
@@ -24,40 +30,48 @@ public class UserController {
 
 	private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
-	@Inject
+	@Autowired
 	private UserService service;
-	@Inject
+	@Autowired
 	private JavaMailSender mailSender;
+	@Inject
+	private SnsDTO naverSns;
 
+	// 회원가입 선택 페이지로
+	@RequestMapping(value = "/create_pre", method = RequestMethod.GET)
+	public String create_pre(Model model) throws Exception{
 
-	// 회원 CREATE
+		SnsLogin naverLogin = new SnsLogin(naverSns);
+		model.addAttribute("naver_url", naverLogin.getNaverAuthURL());
+
+		return "/user/create_pre";
+	}
+
+	// 회원가입 페이지로
 	@RequestMapping(value = "/create", method = RequestMethod.GET)
 	public String create() throws Exception {
 		return "/user/create";
 	}
-	// 회원 CREATE
-	@RequestMapping(value = "/create", method = RequestMethod.POST)
-	public ModelAndView create(UserVO vo) throws Exception {
 
-		ModelAndView mav = new ModelAndView();
+	// 회원 가입
+	@RequestMapping(value = "/create.do", method = RequestMethod.POST)
+	public Model create(@RequestBody UserVO vo, Model model) throws Exception {
 
 		// 비밀번호, 비밀번호 확인이 같은지 체크
 		if(!vo.password.equals(vo.re_password)) {
-			mav.addObject("msg", "비밀번호 재입력 오류");
-			mav.setViewName("/loginForm");
-			return mav;
+			model.addAttribute("msg", "비밀번호 재입력 오류");
+			return model;
 		}
 
 		String hashedPw = BCrypt.hashpw(vo.getPassword(), BCrypt.gensalt()); // BCrypt + salting
-		vo.setPassword(hashedPw);
+			vo.setPassword(hashedPw);
 
-		service.create(vo); //회원정보를 DB에 입력 ( valid = 0 )
+		service.create(vo);
 
-		mav.addObject("msg", "회원등록 완료, 이메일 인증을 해주세요");
-		mav.setViewName("redirect:/login");
 
 		// 인증 메일 발송
-		MailVO sendMail = new MailVO(mailSender);
+		MailVO sendMail;
+		sendMail = new MailVO(mailSender);
 		sendMail.setSubject("[이메일 인증] CodeTogether에서 신규가입을 환영합니다.");
 		sendMail.setText((new StringBuffer().append("<h1>메일인증</h1>")
 				.append("<a href='http://localhost:8080/user/verify?email=" + vo.getEmail())
@@ -66,7 +80,8 @@ public class UserController {
 		sendMail.setTo(vo.getEmail());
 		sendMail.send();
 
-		return mav;
+		model.addAttribute("msg", "회원등록 완료, 이메일 인증을 해주세요");
+		return model;
 	}
 
 
@@ -76,16 +91,16 @@ public class UserController {
 		return "/user/select";
 	}
 	// 회원정보 조회
-	@RequestMapping(value = "/select", method = RequestMethod.POST)
-	public ModelAndView select(@RequestParam("email") LoginDTO dto ) throws Exception {
+	@RequestMapping(value = "/select.do", method = RequestMethod.POST)
+	public Model select(@RequestParam("email") LoginDTO dto, Model model ) throws Exception {
 
-		ModelAndView mav = new ModelAndView();
-		UserVO UserInfo = service.select(dto);
+		UserVO UserInfo;
+		UserInfo = service.select(dto);
 
-		mav.addObject("UserInfo", UserInfo);
-		mav.setViewName("/user/select");
+		model.addAttribute("UserInfo", UserInfo);
+		model.addAttribute("msg","회원정보 불러오기 완료.");
 
-		return mav;
+		return model;
 	}
 
 
@@ -95,19 +110,18 @@ public class UserController {
 		return "/user/update";
 	}
 	// 회원정보 수정 POST
-	@RequestMapping(value = "/update", method = RequestMethod.POST)
-	public ModelAndView update(UserVO vo) throws Exception {
-		ModelAndView mav = new ModelAndView();
+	@RequestMapping(value = "/update.do", method = RequestMethod.POST)
+	@ResponseBody
+	public Model update(@RequestBody UserVO vo, Model model) throws Exception {
 
 		String hashedPw = BCrypt.hashpw(vo.getPassword(), BCrypt.gensalt());
 		vo.setPassword(hashedPw);
 
 		service.update(vo);
 
-		mav.addObject("msg", "회원정보 수정 완료");
-		mav.setViewName("/");
+		model.addAttribute("msg", "회원정보 수정 완료");
 
-		return mav;
+		return model;
 	}
 
 
@@ -118,7 +132,8 @@ public class UserController {
 	}
 	// 회원 DELETE POST
 	@RequestMapping(value = "/delete", method = RequestMethod.POST)
-	public ModelAndView delete(UserVO vo) throws Exception {
+	@ResponseBody
+	public Model delete(@RequestBody UserVO vo,Model model) throws Exception {
 		ModelAndView mav = new ModelAndView();
 
 		String hashedPw = BCrypt.hashpw(vo.getPassword(), BCrypt.gensalt());
@@ -128,7 +143,7 @@ public class UserController {
 
 		mav.addObject("msg", "회원탈퇴 완료");
 
-		return mav;
+		return model;
 	}
 
 	// 비밀번호 찾기 GET
@@ -138,7 +153,7 @@ public class UserController {
 	}
 
 	// 비밀번호 찾기 POST
-	@RequestMapping(value = "/findPassword", method = RequestMethod.POST)
+	@RequestMapping(value = "/findPassword.do", method = RequestMethod.POST)
 	public String forgetPasswordP(UserVO vo) throws Exception {
 
 		String uuid = tempPassword();
@@ -180,6 +195,7 @@ public class UserController {
 
 		return uuid;
 	}
+
 }
 
 

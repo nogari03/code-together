@@ -2,47 +2,49 @@ package com.codetogether.user;
 
 import java.time.LocalDateTime;
 
+import javax.validation.constraints.Email;
+import javax.validation.constraints.Pattern;
+
 public class UserVO {
 
-
-	String id;
-	//@Email()
+	String member_id;
+	@Email
 	String email;
 
-	//@Pattern(regexp="^.*(?=.{6,20})(?=.*[0-9])(?=.*[a-zA-Z]).*$")
+	@Pattern(regexp="^.*(?=.{6,20})(?=.*[0-9])(?=.*[a-zA-Z]).*$")
 	String password;
 
-	//@Pattern(regexp="^.*(?=.{6,20})(?=.*[0-9])(?=.*[a-zA-Z]).*$")
+	@Pattern(regexp="^.*(?=.{6,20})(?=.*[0-9])(?=.*[a-zA-Z]).*$")
 	String re_password;
 
-	//@Pattern(regexp = "^[가-힣]{2,6}$")
+	@Pattern(regexp = "^[가-힣]{2,6}$")
 	String name;
 
 	String type;
 
-	//@Pattern(regexp = "^(01[1|6|7|8|9|0])-(\\d{3,4})-(\\d{4})$")
+	@Pattern(regexp = "^(01[1|6|7|8|9|0])-(\\d{3,4})-(\\d{4})$")
 	String phone;
 
-	//@Email()
+	@Email()
 	String naver_email;
 
-	//@Email()
+	@Email()
 	String google_email;
 
 	int valid;
 
-	LocalDateTime created;
+	LocalDateTime created_at;
 
-	LocalDateTime updated;
+	LocalDateTime updated_at;
 
 	String uuid;
 
-	public String getId() {
-		return id;
+	public String getMember_id() {
+		return member_id;
 	}
 
-	public void setId(String id) {
-		this.id = id;
+	public void setMember_id(String member_id) {
+		this.member_id = member_id;
 	}
 
 	public String getEmail() {
@@ -117,20 +119,20 @@ public class UserVO {
 		this.valid = valid;
 	}
 
-	public LocalDateTime getCreated() {
-		return created;
+	public LocalDateTime getCreated_at() {
+		return created_at;
 	}
 
-	public void setCreated(LocalDateTime created) {
-		this.created = created;
+	public void setCreated_at(LocalDateTime created_at) {
+		this.created_at = created_at;
 	}
 
-	public LocalDateTime getUpdated() {
-		return updated;
+	public LocalDateTime getUpdated_at() {
+		return updated_at;
 	}
 
-	public void setUpdated(LocalDateTime updated) {
-		this.updated = updated;
+	public void setUpdated_at(LocalDateTime updated_at) {
+		this.updated_at = updated_at;
 	}
 
 	public String getUuid() {
@@ -143,10 +145,10 @@ public class UserVO {
 
 	@Override
 	public String toString() {
-		return "UserVO [id=" + id + ", email=" + email + ", password=" + password + ", re_password=" + re_password
-				+ ", name=" + name + ", type=" + type + ", phone=" + phone + ", naver_email=" + naver_email
-				+ ", google_email=" + google_email + ", valid=" + valid + ", created=" + created + ", updated="
-				+ updated + "]";
+		return "UserVO [member_id=" + member_id + ", email=" + email + ", password=" + password + ", re_password="
+				+ re_password + ", name=" + name + ", type=" + type + ", phone=" + phone + ", naver_email="
+				+ naver_email + ", google_email=" + google_email + ", valid=" + valid + ", created_at=" + created_at
+				+ ", updated_at=" + updated_at + ", uuid=" + uuid + "]";
 	}
 
 }

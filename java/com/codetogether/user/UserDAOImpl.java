@@ -51,7 +51,6 @@ public class UserDAOImpl implements UserDAO {
 	}
 	@Override
 	public int checkValid(String email) {
-		System.out.println(sql.selectOne("checkValid", email));
 		return sql.selectOne("checkValid", email);
 	}
 

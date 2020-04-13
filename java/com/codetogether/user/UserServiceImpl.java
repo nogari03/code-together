@@ -42,7 +42,7 @@ public class UserServiceImpl implements UserService {
 		return userdao.login(loginDTO);
 	}
 
-	// 로그아웃
+	// 로그아웃 -> JWT 로그아웃으로 ..
 	@Override
 	public void logout(HttpSession httpsession) {
 		httpsession.invalidate();
@@ -73,19 +73,3 @@ public class UserServiceImpl implements UserService {
 	}
 
 }
-	/*
-	@Override
-	@ExceptionHandler(com.codetogether.common.EmailPasswordNotMatchingException.class)
-	AuthInfo loginAuth(LoginDTO loginDTO) throws Exception {
-		UserVO userVO = userdao.selectByEmail(loginDTO.getEmail());
-		if(userVO == null) {
-			throw new EmailPasswordNotMatchingException();
-		}
-		if(!userVO.matchPassword(loginDTO.getPassword())) {
-			throw new EmailPasswordNotMatchingException();
-		}
-		return new AuthInfo(userVO.getEmail(), userVO.getName());
-	}
-	*/
-
-

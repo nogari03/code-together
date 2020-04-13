@@ -2,10 +2,17 @@ package com.codetogether.login;
 
 public class LoginDTO {
 
+	private int member_id;
 	private String email;
 	private String password;
 	private boolean useCookie;
 
+	public int getMember_id() {
+		return member_id;
+	}
+	public void setMember_id(int member_id) {
+		this.member_id = member_id;
+	}
 	public String getEmail() {
 		return email;
 	}
