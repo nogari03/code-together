@@ -11,14 +11,11 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 
-import com.codetogether.login.LoginDTO;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 
 @Controller
@@ -30,9 +27,10 @@ public class JwtServiceImpl implements JwtService {
 
 	Log log = LogFactory.getLog(JwtServiceImpl.class);
 
+	// refresh token 미사용 및 만료시간만 확인할것
 	// 토큰 생성
 	@Override
-	public String createToken(LoginDTO dto) {
+	public String createToken(String email) {
 
 		Map<String, Object> headers = new HashMap<>();
 		headers.put("typ", "JWT");
@@ -42,7 +40,7 @@ public class JwtServiceImpl implements JwtService {
 		Date now = new Date();
 		now.setTime(now.getTime() + EXPIRATIONTIME);
 		payloads.put("exp", now);
-		payloads.put("info",dto);
+		payloads.put("email",email);
 
 
 		String jwt = Jwts.builder()
@@ -71,7 +69,7 @@ public class JwtServiceImpl implements JwtService {
 
 	// 토큰 검증
 	@Override
-	public String ValidToken(String jwt) throws Exception {
+	public Boolean ValidToken(String jwt) throws Exception {
 
 		String result = "";
 
@@ -80,17 +78,11 @@ public class JwtServiceImpl implements JwtService {
 					.setSigningKey(this.generateKey())
 					.parseClaimsJws(jwt)
 					.getBody();
-			result = "토큰 검증 완료. 유효한 토큰입니다.";
-
-		} catch (UnauthorizedException e) {
-			result = "인증되지 않은 토큰 입니다.";
-		} catch (ExpiredJwtException eje) {
-			result = "만료된 토큰입니다.";
-		} catch (SignatureException se) {
-			result = "서명이 유효하지 않습니다.";
+		} catch (Exception e) {
+			return false;  //유효하지 않은 토큰
 		}
 
-		return result;
+		return true; //유효한 토큰
 }
 	// 토큰에서 값 가져오기
 	@Override

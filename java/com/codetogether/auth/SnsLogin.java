@@ -15,6 +15,7 @@ public class SnsLogin {
 	private OAuth20Service oauthService;
 	private SnsDTO sns;
 
+	// 구글로그인 미사용
 	public SnsLogin(SnsDTO sns) {
 		this.oauthService = new ServiceBuilder(sns.getClientId())
 				.apiSecret(sns.getClientSecret())

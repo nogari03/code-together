@@ -151,4 +151,6 @@ public class UserVO {
 				+ ", updated_at=" + updated_at + ", uuid=" + uuid + "]";
 	}
 
+
+
 }

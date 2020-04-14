@@ -6,6 +6,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
+//인터셉터 미사용
 public class LoginInterceptor extends HandlerInterceptorAdapter {
 
 	@Override

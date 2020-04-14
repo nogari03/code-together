@@ -62,6 +62,10 @@ public class UserDAOImpl implements UserDAO {
 			return sql.selectOne("getBySnsGoogle", userVO.getGoogle_email());
 	}
 }
+	@Override
+	public void createNaver(UserVO vo) {
+		sql.insert("createNaver", vo);
+	}
 
 	@Override
 	public void verify(UserVO uservo) {

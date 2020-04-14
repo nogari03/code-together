@@ -16,9 +16,10 @@ public class UserServiceImpl implements UserService {
 	// 회원 가입
 	@Override
 	public void create(UserVO userVO) throws Exception {
-		userdao.create(userVO);
+			userdao.create(userVO);
 	}
 
+	// 회원 조회
 	@Override
 	public UserVO select(LoginDTO loginDTO) throws Exception {
 		return userdao.select(loginDTO);
@@ -53,6 +54,10 @@ public class UserServiceImpl implements UserService {
 		return userdao.getBySns(userVO);
 	}
 
+	@Override
+	public void createNaver(UserVO vo) throws Exception {
+		userdao.createNaver(vo);
+	}
 	@Override
 	public void verify(UserVO uservo) {
 		userdao.verify(uservo);
