@@ -6,7 +6,7 @@ public interface JwtService {
 
 	public String createToken(String email);
 
-	Boolean ValidToken(String jwt) throws Exception;
+	boolean ValidToken(String token) throws Exception;
 
 	Map<String, Object> getTokenPayload(String jwt);
 

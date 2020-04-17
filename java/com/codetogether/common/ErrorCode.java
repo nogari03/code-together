@@ -19,7 +19,9 @@ public enum ErrorCode {
 
 
 	DATA_INTEGRITY_VIOLATION(500, "C001", "Data integrity violation."),
-	HTTP_MEDIA_TYPE_NOT_SUPPORTED(501, "C002", "Http Media Type Not Supported.")
+	HTTP_MEDIA_TYPE_NOT_SUPPORTED(501, "C002", "Http Media Type Not Supported."),
+	NULL_POINTER_EXCEPTION(500, "C003", "NullPointerException."),
+	SQL_EXCEPTION(500, "C004","SQLException")
 
 	;
 	private final String code;

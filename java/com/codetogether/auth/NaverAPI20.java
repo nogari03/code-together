@@ -3,6 +3,7 @@ package com.codetogether.auth;
 import com.github.scribejava.core.builder.api.DefaultApi20;
 
 public class NaverAPI20 extends DefaultApi20 implements SnsUrl {
+
 	private NaverAPI20() {
 	}
 

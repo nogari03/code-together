@@ -1,7 +1,6 @@
 package com.codetogether.user;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpSession;
 
 import org.springframework.stereotype.Service;
 
@@ -13,45 +12,34 @@ public class UserServiceImpl implements UserService {
 	@Inject
 	private UserDAO userdao;
 
-	// 회원 가입
 	@Override
-	public void create(UserVO userVO) throws Exception {
-			userdao.create(userVO);
-	}
-
-	// 회원 조회
-	@Override
-	public UserVO select(LoginDTO loginDTO) throws Exception {
-		return userdao.select(loginDTO);
-	}
-	// 회원 수정
-	@Override
-	public void update(UserVO userVO) throws Exception {
-		userdao.update(userVO);
-	}
-
-	// 회원 탈퇴
-	@Override
-	public void delete(UserVO userVO) throws Exception {
-		userdao.delete(userVO);
-
-	}
-
-	// 로그인
-	@Override
-	public UserVO login(LoginDTO loginDTO) throws Exception {
-		return userdao.login(loginDTO);
-	}
-
-	// 로그아웃 -> JWT 로그아웃으로 ..
-	@Override
-	public void logout(HttpSession httpsession) {
-		httpsession.invalidate();
+	public void create(UserVO vo) throws Exception {
+			userdao.create(vo);
 	}
 
 	@Override
-	public UserVO getBySns(UserVO userVO) throws Exception {
-		return userdao.getBySns(userVO);
+	public UserVO select(LoginDTO dto) throws Exception {
+		return userdao.select(dto);
+	}
+
+	@Override
+	public void update(UserVO vo) throws Exception {
+			userdao.update(vo);
+	}
+
+	@Override
+	public void delete(UserVO vo) throws Exception {
+		userdao.delete(vo);
+	}
+
+	@Override
+	public UserVO login(LoginDTO dto) throws Exception {
+		return userdao.login(dto);
+	}
+
+	@Override
+	public UserVO getBySns(UserVO vo) throws Exception {
+		return userdao.getBySns(vo);
 	}
 
 	@Override
@@ -59,11 +47,10 @@ public class UserServiceImpl implements UserService {
 		userdao.createNaver(vo);
 	}
 	@Override
-	public void verify(UserVO uservo) {
-		userdao.verify(uservo);
+	public void verify(UserVO vo) {
+		userdao.verify(vo);
 
 	}
-
 	@Override
 	public int checkValid(String email) {
 		if(userdao.checkValid(email) == 0) {
@@ -71,10 +58,34 @@ public class UserServiceImpl implements UserService {
 		}
 			return 1;
 	}
-
 	@Override
 	public void tempPassword(UserVO vo) {
 		userdao.tempPassword(vo);
+	}
+
+	@Override
+	public void trans_teacher(UserVO vo) throws Exception {
+		userdao.trans_teacher(vo);
+	}
+
+	@Override
+	public UserVO selectOnlyEmail(UserVO vo) {
+		return userdao.selectOnlyEmail(vo);
+	}
+
+	@Override
+	public void createTeacherInfo(TeacherVO tvo) {
+		userdao.createTeacherInfo(tvo);
+	}
+
+	@Override
+	public TeacherVO selectTeacherInfo(TeacherVO tvo) throws Exception {
+		return userdao.selectTeacherInfo(tvo);
+	}
+
+	@Override
+	public void updateTeacherInfo(TeacherVO tvo) {
+		userdao.updateTeacherInfo(tvo);
 	}
 
 }

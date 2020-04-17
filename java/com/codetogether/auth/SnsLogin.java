@@ -30,7 +30,6 @@ public class SnsLogin {
 		return this.oauthService.getAuthorizationUrl();
 	}
 
-
 	public UserVO getUserProfile(String code) throws Exception {
 
 		OAuth2AccessToken accessToken = oauthService.getAccessToken(code);

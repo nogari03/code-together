@@ -1,28 +1,36 @@
 package com.codetogether.user;
 
-import java.time.LocalDateTime;
-
 import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 
+import org.springframework.validation.annotation.Validated;
+
+@Validated
 public class UserVO {
 
 	String member_id;
+
 	@Email
+	@NotBlank( message = "이메일을 입력해주세요")
 	String email;
 
 	@Pattern(regexp="^.*(?=.{6,20})(?=.*[0-9])(?=.*[a-zA-Z]).*$")
+	@NotBlank( message = "비밀번호를 입력해주세요")
 	String password;
 
 	@Pattern(regexp="^.*(?=.{6,20})(?=.*[0-9])(?=.*[a-zA-Z]).*$")
+	@NotBlank( message = "비밀번호 확인을 입력해주세요")
 	String re_password;
 
 	@Pattern(regexp = "^[가-힣]{2,6}$")
+	@NotBlank( message = "이름을 입력해주세요")
 	String name;
 
 	String type;
 
 	@Pattern(regexp = "^(01[1|6|7|8|9|0])-(\\d{3,4})-(\\d{4})$")
+	@NotBlank( message = "전화번호를 입력해주세요")
 	String phone;
 
 	@Email()
@@ -33,9 +41,11 @@ public class UserVO {
 
 	int valid;
 
-	LocalDateTime created_at;
+	@Pattern(regexp = "yyyy-mm-dd hh:mm:ss")
+	String created_at;
 
-	LocalDateTime updated_at;
+	@Pattern(regexp = "yyyy-mm-dd hh:mm:ss")
+	String updated_at;
 
 	String uuid;
 
@@ -119,19 +129,19 @@ public class UserVO {
 		this.valid = valid;
 	}
 
-	public LocalDateTime getCreated_at() {
+	public String getCreated_at() {
 		return created_at;
 	}
 
-	public void setCreated_at(LocalDateTime created_at) {
+	public void setCreated_at(String created_at) {
 		this.created_at = created_at;
 	}
 
-	public LocalDateTime getUpdated_at() {
+	public String getUpdated_at() {
 		return updated_at;
 	}
 
-	public void setUpdated_at(LocalDateTime updated_at) {
+	public void setUpdated_at(String updated_at) {
 		this.updated_at = updated_at;
 	}
 

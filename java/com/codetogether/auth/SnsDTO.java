@@ -3,9 +3,6 @@ package com.codetogether.auth;
 import com.github.scribejava.apis.GoogleApi20;
 import com.github.scribejava.core.builder.api.DefaultApi20;
 
-import lombok.Data;
-
-@Data
 public class SnsDTO implements SnsUrl {
 
 	private String service;

@@ -1,5 +1,6 @@
 package com.codetogether.user;
 
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.UUID;
 
 import javax.inject.Inject;
@@ -12,8 +13,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.codetogether.auth.SnsDTO;
@@ -29,11 +29,11 @@ import com.codetogether.common.ErrorCode;
 import com.codetogether.login.LoginDTO;
 
 
-@Controller
+@RestController
 @RequestMapping("/user")
 public class UserController {
 
-	private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+	private static final Logger logger = LoggerFactory.getLogger("default");
 
 	@Autowired
 	private UserService service;
@@ -42,66 +42,70 @@ public class UserController {
 	@Inject
 	private SnsDTO naverSns;
 
-	// 회원 가입
-	@RequestMapping(value = "/create.do", method = RequestMethod.POST)
+	@RequestMapping(value = "/checkId.do", method = RequestMethod.POST)
 	@ResponseBody
-	public ModelAndView create(@RequestBody UserVO vo) {
+	public ModelAndView checkId(@RequestBody UserVO vo) throws Exception {
 
 		ModelAndView mav = new ModelAndView();
 		mav.setViewName("jsonView");
 
-
-		if(vo.getEmail() == null || vo.getPassword() == null || vo.getPassword() == null || vo.getName() == null || vo.getPhone() == null) {
-			mav.addObject("result", "빈칸을 채워주세요");
+		if(service.selectOnlyEmail(vo) == null) {
+			mav.addObject("result","1");
+			mav.addObject("message", "아이디를 사용할 수 있습니다. 계속 진행해주세요.");
 			return mav;
 		}
-		// 비밀번호, 비밀번호 확인이 같은지 체크
+
+		mav.addObject("result","0");
+		mav.addObject("message","사용할 수 없는 아이디 입니다.");
+
+		return mav;
+	}
+
+
+	@RequestMapping(value = "/create.do", method = RequestMethod.POST)
+	@ResponseBody
+	public ModelAndView create(@RequestBody UserVO vo) throws Exception {
+
+		ModelAndView mav = new ModelAndView();
+		mav.setViewName("jsonView");
+
 		if(!vo.password.equals(vo.re_password)) {
-			mav.addObject("result", "비밀번호 재입력 오류");
+
+			mav.setStatus(HttpStatus.BAD_REQUEST);
+			mav.addObject("result", "0");
+			mav.addObject("message", "비밀번호 재입력 오류");
 			return mav;
 		}
 
 		String hashedPw = BCrypt.hashpw(vo.getPassword(), BCrypt.gensalt()); // BCrypt + salting
-			vo.setPassword(hashedPw);
+		vo.setPassword(hashedPw);
 
-		try{
-			service.create(vo);
+		service.create(vo);
 
-		} catch (DataIntegrityViolationException e) {
-			mav.addObject("result", "이미 등록된 이메일 입니다.");
-			mav.addObject(ErrorCode.EMAIL_DUPLICATION);
-			logger.info("DataIntegrityViolationException",e);
-			return mav;
-
-		} catch (Exception e) {
-			mav.addObject("result", "등록 오류, 다시 시도해주세요");
-			mav.addObject(ErrorCode.EXCEPTION);
-			logger.info("Exception",e);
-			return mav;
-		}
-
-
-		// 인증 메일 발송
 		try {
 		MailVO sendMail;
 		sendMail = new MailVO(mailSender);
 		sendMail.setSubject("[이메일 인증] CodeTogether에서 신규가입을 환영합니다.");
 		sendMail.setText((new StringBuffer().append("<h1>메일인증</h1>")
-				.append("<a href='http://localhost:8080/user/verify?email=" + vo.getEmail())
+				.append("<a href='http://192.168.1.53:8080/user/verify?email=" + vo.getEmail())
 				.append("' target='_blenk'>이메일 인증 확인</a>").toString()));
 		sendMail.setFrom("admin@CodeTogether.com", "코드투게더");
 		sendMail.setTo(vo.getEmail());
 		sendMail.send();
 		} catch (Exception e){
-			mav.addObject("result", "인증이메일 전송 오류");
-			mav.addObject(ErrorCode.EXCEPTION);
-		}
 
-		mav.addObject("result", "회원등록 완료, 이메일 인증을 해주세요");
+			mav.addObject(ErrorCode.EXCEPTION);
+			mav.addObject("result","0");
+			mav.addObject("message", "인증이메일 전송 오류");
+			logger.error("이메일 전송 오류",e);
+		}
+		mav.addObject("result","1");
+		mav.addObject("message", "회원등록 완료, 이메일 인증을 해주세요");
+
+		logger.info("#################### 신규회원가입 감지 : 이메일 :{} ####################", vo.getEmail());
 		return mav;
 	}
 
-	// 회원 조회
 	@RequestMapping(value = "/select.do", method = RequestMethod.POST)
 	@ResponseBody
 	public ModelAndView select(@RequestBody LoginDTO dto) throws Exception {
@@ -109,32 +113,25 @@ public class UserController {
 		ModelAndView mav = new ModelAndView();
 		mav.setViewName("jsonView");
 
-		UserVO UserInfo;
-		try {
+		UserVO member_info;
+		member_info = service.select(dto);
 
-			UserInfo = service.select(dto);
+		if (!BCrypt.checkpw(dto.getPassword(), member_info.getPassword())){
 
-			if (!BCrypt.checkpw(dto.getPassword(), UserInfo.getPassword())){
-
-				mav.addObject("result", "비밀번호가 일치하지 않습니다.");
-				return mav;
-			}
-
-		} catch (NullPointerException e) {
-			mav.addObject("result","조회 결과가 없습니다.");
-			return mav;
-		} catch (Exception e) {
-			mav.addObject("result","불러오기 실패.");
-			logger.info("Exception",e);
+			mav.setStatus(HttpStatus.BAD_REQUEST);
+			mav.addObject(ErrorCode.INVALID_INPUT_VALUE);
+			mav.addObject("result", "0");
+			mav.addObject("message", "비밀번호가 일치하지 않습니다.");
 			return mav;
 		}
-		mav.addObject("UserInfo", UserInfo);
-		mav.addObject("result","회원정보 불러오기 완료.");
+		mav.addObject("result","1");
+		mav.addObject("message","회원정보 불러오기 완료.");
+		mav.addObject("member_info", member_info);
+
 
 		return mav;
 	}
 
-	// 회원 수정
 	@RequestMapping(value = "/update.do", method = RequestMethod.POST)
 	@ResponseBody
 	public ModelAndView update(@RequestBody UserVO vo) throws Exception {
@@ -142,17 +139,33 @@ public class UserController {
 		ModelAndView mav = new ModelAndView();
 		mav.setViewName("jsonView");
 
+		if(vo.getEmail() == null || vo.getPassword() == null || vo.getName() == null || vo.getName() == null) {
+			mav.setStatus(HttpStatus.BAD_REQUEST);
+			mav.addObject(ErrorCode.INVALID_INPUT_VALUE);
+			mav.addObject("result","0");
+			mav.addObject("message", "수정할 정보를 올바르게 입력해주세요.");
+			return mav;
+
+		}
 		String hashedPw = BCrypt.hashpw(vo.getPassword(), BCrypt.gensalt());
 		vo.setPassword(hashedPw);
 
+		if(service.selectOnlyEmail(vo) == null) {
+			mav.setStatus(HttpStatus.BAD_REQUEST);
+			mav.addObject(ErrorCode.INVALID_INPUT_VALUE);
+			mav.addObject("result","0");
+			mav.addObject("message", "회원정보가 없습니다.");
+			return mav;
+		}
+
 		service.update(vo);
 
-		mav.addObject("result", "회원정보 수정 완료");
+		mav.addObject("result","1");
+		mav.addObject("message", "회원정보 수정 완료");
 
 		return mav;
 	}
 
-	// 회원 삭제
 	@RequestMapping(value = "/delete.do", method = RequestMethod.POST)
 	@ResponseBody
 	public ModelAndView delete(@RequestBody LoginDTO dto) throws Exception {
@@ -161,27 +174,38 @@ public class UserController {
 		mav.setViewName("jsonView");
 
 		UserVO UserInfo = service.select(dto);
+
+		if(!dto.getMember_id().equals(UserInfo.getMember_id())){
+
+			mav.setStatus(HttpStatus.BAD_REQUEST);
+			mav.addObject(ErrorCode.INVALID_INPUT_VALUE);
+			mav.addObject("result", "0");
+			mav.addObject("message", "본인 계정만 삭제할 수 있습니다.");
+			return mav;
+
+		}
+
 		if (!BCrypt.checkpw(dto.getPassword(), UserInfo.getPassword())){
 
-			mav.addObject("result", "비밀번호가 일치하지 않습니다.");
+			mav.setStatus(HttpStatus.BAD_REQUEST);
+			mav.addObject(ErrorCode.INVALID_INPUT_VALUE);
+			mav.addObject("result", "0");
+			mav.addObject("message", "비밀번호가 일치하지 않습니다.");
 			return mav;
 		}
 
+		service.delete(UserInfo);
 
-		try{
-			service.delete(UserInfo);
-		} catch (NullPointerException e) {
+		mav.addObject("result", "1");
+		mav.addObject("message", "회원탈퇴 완료");
 
-		}
-
-		mav.addObject("msg", "회원탈퇴 완료");
+		logger.info("#################### 회원 탈퇴 감지 : 이메일 :{} ####################", dto.getEmail());
 
 		return mav;
 	}
 
-	// 비밀번호 찾기
 	@RequestMapping(value = "/findPassword.do", method = RequestMethod.POST)
-	public String forgetPasswordP(UserVO vo) throws Exception {
+	public String findPassword(UserVO vo) throws Exception {
 
 		String uuid = tempPassword();
 		String hashedPw = BCrypt.hashpw(uuid, BCrypt.gensalt());
@@ -204,16 +228,16 @@ public class UserController {
 	}
 
 	@RequestMapping(value = "/verify", method = RequestMethod.GET)
-	public String verify(@RequestParam @PathVariable String email) {
-		System.out.println("이메일 인증기능 처리");
-
+	public ModelAndView verify(@RequestParam @PathVariable String email) {
+		ModelAndView mav = new ModelAndView();
 
 		UserVO uservo = new UserVO();
 		uservo.setEmail(email);
 		service.verify(uservo);
-		return "/user/verify";
-	}
+		mav.setViewName("redirect:http://192.168.1.93:8000/");
 
+		return mav;
+	}
 
 	public String tempPassword() {
 
@@ -223,32 +247,155 @@ public class UserController {
 		return uuid;
 	}
 
-	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+	@RequestMapping(value="/trans_teacher.do", method = RequestMethod.POST)
+	@ResponseBody
+	public ModelAndView trans_teacher(@RequestBody UserVO vo) throws Exception {
+		ModelAndView mav = new ModelAndView();
+		mav.setViewName("jsonView");
+
+		if( vo == null) {
+
+			mav.setStatus(HttpStatus.BAD_REQUEST);
+			mav.addObject(ErrorCode.INVALID_INPUT_VALUE);
+			mav.addObject("result","0");
+			mav.addObject("message", "값을 입력해주세요");
+			return mav;
+		}
+		service.trans_teacher(vo);
+
+		mav.addObject("result", "1");
+		mav.addObject("message", "선생님 전환 완료. 이제부터 강의 업로드가 가능합니다.");
+		logger.info("#################### 선생님 회원 전환 : 이메일 :{} ####################", vo.getEmail());
+
+		return mav;
+	}
+
+
+	@RequestMapping(value = "/createTeacherInfo.do", method = RequestMethod.POST)
+	@ResponseBody
+	public ModelAndView createTeacherInfo(@RequestBody TeacherVO tvo) throws Exception{
+		ModelAndView mav = new ModelAndView();
+		mav.setViewName("jsonView");
+
+		if(tvo.getMember_id() == null) {
+
+			mav.setStatus(HttpStatus.BAD_REQUEST);
+			mav.addObject(ErrorCode.INVALID_INPUT_VALUE);
+			mav.addObject("result", "0");
+			mav.addObject("message", "선생님 회원이 맞는지 확인해주세요.");
+			return mav;
+		}
+
+		tvo.setTeacher_id(tvo.getMember_id());
+		service.createTeacherInfo(tvo);
+
+		mav.addObject("result", "1");
+		mav.addObject("message", "선생님 정보 등록 완료");
+		return mav;
+	}
+
+
+	@RequestMapping(value = "selectTeacherInfo.do", method = RequestMethod.POST)
+	@ResponseBody
+	public ModelAndView selectTeacherInfo(@RequestBody TeacherVO tvo) throws Exception{
+		ModelAndView mav = new ModelAndView();
+		mav.setViewName("jsonView");
+
+
+		tvo.setTeacher_id(tvo.getMember_id());
+
+		TeacherVO teacher_info;
+
+		if(service.selectTeacherInfo(tvo) == null) {
+
+			mav.setStatus(HttpStatus.BAD_REQUEST);
+			mav.addObject(ErrorCode.INVALID_INPUT_VALUE);
+			mav.addObject("result","0");
+			mav.addObject("message", "선생님 조회 정보가 없습니다.");
+			return mav;
+		}
+
+		teacher_info = service.selectTeacherInfo(tvo);
+
+		mav.addObject("result","1");
+		mav.addObject("message", "선생님 정보 조회 완료");
+		mav.addObject("teacher_info", teacher_info);
+		return mav;
+	}
+
+
+
+	@RequestMapping(value = "/updateTeacherInfo.do", method = RequestMethod.POST)
+	@ResponseBody
+	public ModelAndView updateTeacherInfo(@RequestBody TeacherVO tvo) throws Exception{
+		ModelAndView mav = new ModelAndView();
+		mav.setViewName("jsonView");
+
+		tvo.setTeacher_id(tvo.getMember_id());
+
+		if(service.selectTeacherInfo(tvo) == null) {
+
+			mav.setStatus(HttpStatus.BAD_REQUEST);
+			mav.addObject(ErrorCode.INVALID_INPUT_VALUE);
+			mav.addObject("result","0");
+			mav.addObject("message", "선생님 조회 정보가 없습니다.");
+			return mav;
+		}
+
+		service.updateTeacherInfo(tvo);
+
+		mav.addObject("result","1");
+		mav.addObject("message", "선생님 정보 수정 완료");
+		return mav;
+	}
+
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(value = DuplicateKeyException.class)
-	protected String DuplicateKey(DuplicateKeyException e, Model model) {
-		model.addAttribute(ErrorCode.EMAIL_DUPLICATION);
-		logger.info("DuplicateKeyException", e.getMessage());
-		return "/common/error";
+	protected ModelAndView DuplicateKey(DuplicateKeyException dke) {
+		ModelAndView mav = new ModelAndView();
+		mav.setViewName("jsonView");
+		mav.addObject(ErrorCode.EMAIL_DUPLICATION);
+		mav.addObject("result", "0");
+		mav.addObject("message", "이미 등록된 회원입니다.");
+		logger.debug ("DuplicateKeyException",dke);
+
+		return mav;
+	}
+
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	@ExceptionHandler(value = DataIntegrityViolationException.class)
+	protected ModelAndView DataIntegrityViolation (DataIntegrityViolationException dive) {
+		ModelAndView mav = new ModelAndView();
+		mav.setViewName("jsonView");
+		mav.addObject(ErrorCode.DATA_INTEGRITY_VIOLATION);
+		mav.addObject("result", "0");
+		mav.addObject("message", "데이터베이스 입력 오류 입니다.");
+		logger.debug ("DataIntegrityViolationException",dive);
+
+		return mav;
+	}
+
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	@ExceptionHandler(value = SQLIntegrityConstraintViolationException.class)
+	protected ModelAndView SQLIntegrityConstraintViolationException (SQLIntegrityConstraintViolationException sqlive) {
+		ModelAndView mav = new ModelAndView();
+		mav.addObject(ErrorCode.DATA_INTEGRITY_VIOLATION);
+		mav.addObject("result", "0");
+		mav.addObject("message", "데이터베이스 오류 다시 시도해주세요.");
+		logger.debug ("SQLIntegrityConstraintViolationException",sqlive);
+
+		return mav;
 	}
 
 	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-	@ExceptionHandler(value = DataIntegrityViolationException.class)
-	protected String DataIntegrityViolation (DataIntegrityViolationException e,Model model) {
-		model.addAttribute(ErrorCode.DATA_INTEGRITY_VIOLATION);
-		logger.info("DataIntegrityViolationException", e);
-		return "/common/error";
+	@ExceptionHandler(value = NullPointerException.class)
+	protected ModelAndView NullPointerException(NullPointerException npe) {
+		ModelAndView mav = new ModelAndView();
+		mav.addObject(ErrorCode.NULL_POINTER_EXCEPTION);
+		mav.addObject("result", "0");
+		mav.addObject("message", "데이터가 없습니다.");
+		logger.debug ("NullPointerException",npe);
+
+		return mav;
 	}
 }
-
-
-	// 회원 수정 POST
-
-		/*
-			if(StringUtils.hasText(userVO.getPassword())) {
-
-			String bCryptString=bCryptPasswordEncoder.encode(userVO.getPassword());
-			userVO.setPassword(bCryptString);
-		}
-			userservice.create(userVO);
-		return "signup";
-		*/

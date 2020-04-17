@@ -1,10 +1,13 @@
 package com.codetogether.user;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpSession;
 
 import org.apache.ibatis.session.SqlSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.codetogether.login.LoginDTO;
 import com.mysql.cj.util.StringUtils;
@@ -12,54 +15,71 @@ import com.mysql.cj.util.StringUtils;
 @Repository
 public class UserDAOImpl implements UserDAO {
 
+	private static final Logger logger = LoggerFactory.getLogger("default");
+
 	@Inject
 	private SqlSession sql;
 
-	// 회원 가입
+	@Transactional
 	@Override
-	public void create(UserVO userVO) throws Exception {
-		sql.insert("create", userVO);
+	public void create(UserVO vo) throws Exception {
+		try{
+			sql.insert("create", vo);
+		} catch (DataIntegrityViolationException dve) {
+			throw new DataIntegrityViolationException("DB 중복값 입력");
+		} catch (Exception e) {
+			throw new RuntimeException("회원 등록 오류"	);
+		}
 	}
 
+	@Transactional
 	@Override
-	public UserVO select(LoginDTO loginDTO) throws Exception {
-		return sql.selectOne("select", loginDTO);
-	}
-	// 회원 수정
-	@Override
-	public void update(UserVO userVO) throws Exception {
-		sql.update("update", userVO);
-	}
-
-	// 회원 탈퇴
-	@Override
-	public void delete(UserVO userVO) throws Exception {
-		sql.delete("delete", userVO);
+	public UserVO select(LoginDTO dto) throws Exception {
+		try {
+			sql.selectOne("select", dto);
+		} catch (NullPointerException npe) {
+			throw new NullPointerException("NullPointerException");
+		} catch (Exception e) {
+			throw new Exception("DB 불러오기 오류");
+		}
+		return sql.selectOne("select", dto);
 	}
 
-	// 로그인 처리
+	@Transactional
 	@Override
-	public UserVO login(LoginDTO loginDTO) throws Exception {
-		return sql.selectOne("login", loginDTO);
-
+	public void update(UserVO vo) throws Exception {
+		try {
+		sql.update("update", vo);
+		} catch (NullPointerException npe) {
+			throw new NullPointerException("NullPointerException");
+		} catch (Exception e) {
+			throw new Exception("유저 업데이트 오류");
+		}
 	}
 
-	// 로그 아웃
+	@Transactional
 	@Override
-	public void logout(HttpSession httpsession) {
-
+	public void delete(UserVO vo) throws Exception {
+		sql.delete("delete", vo);
 	}
+
+	@Transactional
+	@Override
+	public UserVO login(LoginDTO dto) throws Exception {
+		return sql.selectOne("login", dto);
+	}
+
 	@Override
 	public int checkValid(String email) {
 		return sql.selectOne("checkValid", email);
 	}
 
 	@Override
-	public UserVO getBySns(UserVO userVO) {
-		if ( !StringUtils.isNullOrEmpty(userVO.getNaver_email())) {
-			return sql.selectOne("getBySnsNaver", userVO.getNaver_email());
+	public UserVO getBySns(UserVO vo) {
+		if ( !StringUtils.isNullOrEmpty(vo.getNaver_email())) {
+			return sql.selectOne("getBySnsNaver", vo.getNaver_email());
 		} else {
-			return sql.selectOne("getBySnsGoogle", userVO.getGoogle_email());
+			return sql.selectOne("getBySnsGoogle", vo.getGoogle_email());
 	}
 }
 	@Override
@@ -68,12 +88,54 @@ public class UserDAOImpl implements UserDAO {
 	}
 
 	@Override
-	public void verify(UserVO uservo) {
-		sql.selectOne("verfy", uservo);
+	public void verify(UserVO vo) {
+		sql.selectOne("verfy", vo);
 	}
 
 	@Override
 	public void tempPassword(UserVO vo) {
 		sql.selectOne("tempPassword", vo);
 	}
+
+	@Override
+	public void trans_teacher(UserVO vo) throws Exception {
+		try{
+			sql.update("trans_teacher", vo);
+		} catch (NullPointerException npe) {
+			throw new NullPointerException("NullPointerException");
+		} catch (Exception e) {
+			throw new Exception("알수없는 오류");
+		}
+	}
+	@Override
+	public UserVO selectOnlyEmail(UserVO vo) {
+		return sql.selectOne("selectOnlyEmail", vo);
+	}
+
+
+	@Transactional
+	@Override
+	public void createTeacherInfo(TeacherVO tvo) {
+		sql.insert("createTeacherInfo",tvo);
+
+	}
+
+	@Override
+	public TeacherVO selectTeacherInfo(TeacherVO tvo) throws Exception {
+
+		try{
+			sql.selectOne("selectTeacherInfo", tvo);
+		} catch (Exception e) {
+			throw new Exception();
+		}
+
+		return sql.selectOne("selectTeacherInfo", tvo);
+	}
+
+	@Transactional
+	@Override
+	public void updateTeacherInfo(TeacherVO tvo) {
+		sql.update("updateTeacherInfo",tvo);
+	}
+
 }

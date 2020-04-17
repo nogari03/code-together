@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,14 +27,15 @@ import com.codetogether.auth.JwtService;
 import com.codetogether.auth.SnsDTO;
 import com.codetogether.auth.SnsLogin;
 import com.codetogether.common.ErrorCode;
-import com.codetogether.user.UserController;
 import com.codetogether.user.UserService;
 import com.codetogether.user.UserVO;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 
 @Controller
 public class LoginController {
 
-	private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+	private static final Logger logger = LoggerFactory.getLogger("default");
 
 
 	@Autowired
@@ -46,9 +46,7 @@ public class LoginController {
 	private SnsDTO naverSns;
 
 
-	// 로그인
 	@RequestMapping(value = "/login.do", method = RequestMethod.POST)
-	@ResponseStatus(HttpStatus.OK)
 	@ResponseBody
 	public ModelAndView loginPOST(@RequestBody LoginDTO dto) throws Exception {
 
@@ -56,51 +54,48 @@ public class LoginController {
 		mav.setViewName("jsonView");
 
 		if(dto.getEmail() == null || dto.getPassword() == null) {
+			mav.setStatus(HttpStatus.BAD_REQUEST);
 			mav.addObject("result","0");
-			mav.addObject("error", "입력값이 올바르지 않습니다.");
+			mav.addObject("message", "입력값이 올바르지 않습니다.");
 			return mav;
 		}
 
 		try{
 			if(service.checkValid(dto.getEmail()) == 0) {
+				mav.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
 				mav.addObject("result","0");
-				mav.addObject("error", "유효한 회원이 아닙니다.");
+				mav.addObject("message", "유효한 회원이 아닙니다.");
 				return mav;
 			}
 		} catch (NullPointerException e) {
+			mav.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
 			mav.addObject("result","0");
-			mav.addObject("error", "회원이 존재하지 않습니다.");
+			mav.addObject("message", "회원이 존재하지 않습니다.");
 			return mav;
 		}
 
 		UserVO userInfo = service.select(dto);
 
 		if (!BCrypt.checkpw(dto.getPassword(), userInfo.getPassword())){
+			mav.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
 			mav.addObject("result","0");
-			mav.addObject("error", "비밀번호가 일치하지 않습니다.");
+			mav.addObject("message", "비밀번호가 일치하지 않습니다.");
 			return mav;
 		}
 
-		String token = jwtservice.createToken(dto.getEmail());
+		String token = jwtservice.createToken(userInfo.getMember_id());
 
-		mav.addObject("success", "로그인에 성공하였습니다!");
 		mav.addObject("result","1");
-		mav.addObject("token",token);
+		mav.addObject("message", "로그인에 성공하였습니다!");
 		mav.addObject("member_id",userInfo.getMember_id());
-		logger.info("info","user login");
+		mav.addObject("token",token);
+
+		logger.info("############################ 로그인 감지 : 이메일 :{} ###########################",userInfo.getEmail());
 
 		return mav;
 	}
 
-	// 로그아웃 (수정해야함)
-	@RequestMapping("/logout.do")
-	@ResponseStatus(HttpStatus.OK)
-	public void logout(String token) {
-		// 장고단에서 쿠키를 삭제하도록 지시
-
-	}
-
-	@RequestMapping(value = "/auth/{snsService}/callback")
+	@RequestMapping(value = "/auth/{snsService}/callback", method = RequestMethod.GET)
 	@ResponseBody
 	public ModelAndView naverCallback(@PathVariable String snsService,
 		   @RequestParam String code, HttpSession session) throws Exception {
@@ -119,32 +114,39 @@ public class LoginController {
 		mav.setViewName("jsonView");
 
 		if ( uservo == null) {
-
-			mav.addObject("result", "SNS로그인감지! 추가정보를 입력해 주세요. 다음부터는 자동으로 로그인 됩니다.");
+			mav.addObject("result", "0");
+			mav.addObject("message", "SNS로그인감지! 추가정보를 입력해 주세요. 다음부터는 자동으로 로그인 됩니다.");
 			mav.addObject("naver_email",snsUser.getNaver_email()); //
 			return mav;
 
 		} else {
 
 			String token = jwtservice.createToken(snsUser.getNaver_email());
+			mav.addObject("result","1");
+			mav.addObject("message", "로그인 완료! 반갑습니다.");
 			mav.addObject("token",token);
-			mav.addObject("result", "로그인 완료! 반갑습니다.");
+			logger.info("######################### SNS 로그인 감지 : 이메일 :{} ########################",snsUser.getNaver_email());
 		}
 
 		return mav;
 	}
 
-	@ResponseStatus(HttpStatus.OK)
 	@ResponseBody
-	@RequestMapping(value = "/checkToken.do")
-	public int checkToken(@RequestBody String token) throws Exception {
+	@RequestMapping(value = "/checkToken.do", method = RequestMethod.POST)
+	public boolean checkToken(@RequestBody String token) throws Exception {
 
-		boolean checkToken = jwtservice.ValidToken(token);
+		JsonParser parser = new JsonParser();
+		JsonElement element = parser.parse(token);
+
+		String tokenValue = element.getAsJsonObject().get("token").getAsString();
+
+
+		boolean checkToken = jwtservice.ValidToken(tokenValue);
 
 		if (checkToken) {
-		return 0; //토큰 유효함
+		return true;
 		}
-		return 1; //유효하지 않은 토큰
+		return false;
 	}
 
 	public Map<String, Object> parseToken(String token){
@@ -161,31 +163,34 @@ public class LoginController {
 
 	}
 
+	@RequestMapping(value="/getId.do", method = RequestMethod.POST)
+	@ResponseBody
+	public ModelAndView getMemberId (@RequestBody String token) throws Exception {
+		ModelAndView mav = new ModelAndView();
+		mav.setViewName("jsonView");
+
+		if(this.checkToken(token)) {
+			Map<String, Object> map = this.parseToken(token);
+			mav.addObject("result", "1");
+			mav.addObject("member_id", map.get("member_id"));
+			return mav;
+		}
+		mav.addObject("result", "0");
+		return mav;
+	}
+
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(value = HttpMessageNotReadableException.class)
-	protected String HttpMessageNotReadable (HttpMessageNotReadableException e, Model model) {
-		model.addAttribute(ErrorCode.INVALID_INPUT_VALUE);
-		logger.info("HttpMessageNotReadableException", e);
-		return "/common/error";
+	protected ModelAndView HttpMessageNotReadable (HttpMessageNotReadableException httpme) {
+		ModelAndView mav = new ModelAndView();
+		mav.setViewName("jsonView");
+
+		mav.addObject(ErrorCode.INVALID_INPUT_VALUE);
+		mav.addObject("result","0");
+		mav.addObject("message","HTTP 메세지를 읽을 수 없습니다.");
+		logger.debug("HttpMessageNotReadableException", httpme);
+
+		return mav;
 	}
 
 }
-
-
-// 세션 및 쿠키 -> JWT 사용으로 주석화
-//
-//session.setAttribute("login", dto);
-//
-////쿠키사용이 TRUE 일경우
-//if( dto.isUseCookie() ) {
-//	Cookie cookie = new Cookie("cookie", session.getId());
-//	cookie.setPath("/");
-//	cookie.setMaxAge(60*60*24*7); //쿠키 시간
-//	response.addCookie(cookie);
-//	}
-//
-//mav.addObject("msg", "로그인 성공!");
-//mav.setViewName("redirect:/");
-//
-//return mav;
-//}

@@ -1,7 +1,5 @@
 package com.codetogether.web;
 
-import java.util.Locale;
-
 import javax.inject.Inject;
 
 import org.slf4j.Logger;
@@ -23,9 +21,11 @@ public class HomeController {
 	private SnsDTO naverSns;
 
 	@RequestMapping(value = "/", method = RequestMethod.GET)
-	public String home(Locale locale, Model model) {
+	public String home(Model model) {
 
-		logger.info("Welcome home!");
+		logger.info("################################################################################################");
+		logger.info("######################################### SERVER START #########################################");
+		logger.info("################################################################################################");
 
 		SnsLogin naverLogin = new SnsLogin(naverSns);
 		model.addAttribute("naver_url", naverLogin.getNaverAuthURL());

@@ -8,29 +8,30 @@ import java.util.Map;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.SignatureException;
+import io.jsonwebtoken.UnsupportedJwtException;
 import lombok.extern.slf4j.Slf4j;
 
-@Controller
 @Slf4j
 @Service
 public class JwtServiceImpl implements JwtService {
-	static final long EXPIRATIONTIME = (1000 * 60 * 10); // 만료기간 10분
-	static final String SECRET = "A";
+	static final long EXPIRATIONTIME = (1000 * 60 * 30); // 만료기간 (30분)
+	static final String SECRET = "thisissparta";
 
 	Log log = LogFactory.getLog(JwtServiceImpl.class);
 
 	// refresh token 미사용 및 만료시간만 확인할것
-	// 토큰 생성
 	@Override
-	public String createToken(String email) {
+	public String createToken(String member_id) {
 
 		Map<String, Object> headers = new HashMap<>();
 		headers.put("typ", "JWT");
@@ -40,14 +41,16 @@ public class JwtServiceImpl implements JwtService {
 		Date now = new Date();
 		now.setTime(now.getTime() + EXPIRATIONTIME);
 		payloads.put("exp", now);
-		payloads.put("email",email);
+		payloads.put("member_id",member_id);
 
 
-		String jwt = Jwts.builder()
-				.setHeader(headers)
-				.setClaims(payloads)
-				.signWith(SignatureAlgorithm.HS256, SECRET.getBytes())
-				.compact();
+		String jwt = null;
+
+			jwt = Jwts.builder()
+					.setHeader(headers)
+					.setClaims(payloads)
+					.signWith(SignatureAlgorithm.HS256, this.generateKey())
+					.compact();
 
 		return jwt;
 
@@ -67,34 +70,53 @@ public class JwtServiceImpl implements JwtService {
 		return key;
 	}
 
-	// 토큰 검증
+	//여기서부터 하자
 	@Override
-	public Boolean ValidToken(String jwt) throws Exception {
-
-		String result = "";
+	public boolean ValidToken(String token) throws Exception {
 
 		try {
-			Jwts.parser()
+					Jwts.parser()
 					.setSigningKey(this.generateKey())
-					.parseClaimsJws(jwt)
+					.parseClaimsJws(token)
 					.getBody();
-		} catch (Exception e) {
-			return false;  //유효하지 않은 토큰
-		}
 
-		return true; //유효한 토큰
+					return true;
+			}catch(ExpiredJwtException eje){
+			//JWT를 생성할 때 지정한 유효기간 초과할 때.
+				log.debug("JWT 유효기간 초과");
+				throw new RuntimeException("JWT 유효기간 초과");
+			}catch(UnsupportedJwtException uje){
+			//예상하는 형식과 일치하지 않는 특정 형식이나 구성의 JWT일 때
+				log.debug("JWT 형식 불일치");
+				throw new RuntimeException("JWT 형식 불일치");
+			}catch(MalformedJwtException mje){
+			//JWT가 올바르게 구성되지 않았을 때
+				log.debug("잘못된 JWT 구성");
+				throw new RuntimeException("잘못된 JWT 구성");
+			}catch(SignatureException se){
+			//JWT의 기존 서명을 확인하지 못했을 때
+				log.debug("JWT 서명 확인 불가");
+				throw new RuntimeException("JWT 서명 확인 불가");
+			}catch(IllegalArgumentException iae){
+				log.debug("JWT IllegalArgumentException");
+				throw new RuntimeException("JWT IllegalArgumentException");
+			}catch (Exception e) {
+				log.debug("알 수 없는 오류 발생", e);
+				throw new RuntimeException("알 수 없는 오류 발생", e);
+			}
 }
-	// 토큰에서 값 가져오기
+
 	@Override
-	public Map<String, Object> getTokenPayload(String jwt){
+	public Map<String, Object> getTokenPayload(String token){
 		Map<String, Object> payloadMap = new HashMap<>();
 		ObjectMapper om = new ObjectMapper();
-		String encodedTokenPayload = jwt.split("\\.")[1];
+		String encodedTokenPayload = token.split("\\.")[1];
 		String tokenPayload = new String(new Base64(true).decode(encodedTokenPayload));
 		try {
 			payloadMap=om.readValue(tokenPayload, new TypeReference<Map<String, Object>>(){});
 		}catch(Exception e) {
-			System.out.println("[getTokenPayload] + " +e.getMessage());
+			log.debug("페이로드 추출 실패", e);
+			throw new RuntimeException("페이로드 추출 실패", e);
 		}
 		return payloadMap;
 	}
