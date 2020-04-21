@@ -1,4 +1,4 @@
-package com.codetogether.auth;
+package com.codetogether.login;
 
 import com.codetogether.user.UserVO;
 import com.fasterxml.jackson.databind.JsonNode;

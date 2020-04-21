@@ -1,4 +1,4 @@
-package com.codetogether.user;
+package com.codetogether.teacher;
 
 public class TeacherVO {
 

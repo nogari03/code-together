@@ -24,16 +24,6 @@ public interface UserService {
 
 	void tempPassword(UserVO vo);
 
-	void trans_teacher(UserVO vo) throws Exception;
-
 	UserVO selectOnlyEmail(UserVO vo);
-
-	void createTeacherInfo(TeacherVO tvo);
-
-	TeacherVO selectTeacherInfo(TeacherVO tvo) throws Exception;
-
-	void updateTeacherInfo(TeacherVO tvo);
-
-
 
 }

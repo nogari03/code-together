@@ -1,4 +1,4 @@
-package com.codetogether.auth;
+package com.codetogether.login;
 
 public interface SnsUrl {
 

@@ -64,28 +64,8 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public void trans_teacher(UserVO vo) throws Exception {
-		userdao.trans_teacher(vo);
-	}
-
-	@Override
 	public UserVO selectOnlyEmail(UserVO vo) {
 		return userdao.selectOnlyEmail(vo);
-	}
-
-	@Override
-	public void createTeacherInfo(TeacherVO tvo) {
-		userdao.createTeacherInfo(tvo);
-	}
-
-	@Override
-	public TeacherVO selectTeacherInfo(TeacherVO tvo) throws Exception {
-		return userdao.selectTeacherInfo(tvo);
-	}
-
-	@Override
-	public void updateTeacherInfo(TeacherVO tvo) {
-		userdao.updateTeacherInfo(tvo);
 	}
 
 }

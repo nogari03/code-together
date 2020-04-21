@@ -1,4 +1,4 @@
-package com.codetogether.auth;
+package com.codetogether.login;
 
 import com.github.scribejava.apis.GoogleApi20;
 import com.github.scribejava.core.builder.api.DefaultApi20;

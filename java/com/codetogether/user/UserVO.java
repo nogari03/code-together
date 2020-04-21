@@ -9,45 +9,47 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 public class UserVO {
 
-	String member_id;
+	String member_id;			// 회원 고유 id
 
 	@Email
 	@NotBlank( message = "이메일을 입력해주세요")
-	String email;
+	String email;				// 회원 고유 email
 
 	@Pattern(regexp="^.*(?=.{6,20})(?=.*[0-9])(?=.*[a-zA-Z]).*$")
 	@NotBlank( message = "비밀번호를 입력해주세요")
-	String password;
+	String password;			// 회원 패스워드
 
 	@Pattern(regexp="^.*(?=.{6,20})(?=.*[0-9])(?=.*[a-zA-Z]).*$")
 	@NotBlank( message = "비밀번호 확인을 입력해주세요")
-	String re_password;
+	String re_password;			// 회원 패스워드 확인
 
 	@Pattern(regexp = "^[가-힣]{2,6}$")
 	@NotBlank( message = "이름을 입력해주세요")
-	String name;
+	String name;				// 이름
 
-	String type;
+	String type;				// 타입 ( 학생 - 선생님 )
 
 	@Pattern(regexp = "^(01[1|6|7|8|9|0])-(\\d{3,4})-(\\d{4})$")
 	@NotBlank( message = "전화번호를 입력해주세요")
-	String phone;
+	String phone; 				// 전화번호
 
 	@Email()
-	String naver_email;
+	String naver_email;			// SNS 회원 ( 네이버 )
 
 	@Email()
-	String google_email;
+	String google_email;		// SNS 회원 ( 구글 )
 
-	int valid;
-
-	@Pattern(regexp = "yyyy-mm-dd hh:mm:ss")
-	String created_at;
+	int valid;					// 메일 인증 유무 ( 유효성 )
 
 	@Pattern(regexp = "yyyy-mm-dd hh:mm:ss")
-	String updated_at;
+	String created_at;			// 가입 날짜
 
-	String uuid;
+	@Pattern(regexp = "yyyy-mm-dd hh:mm:ss")
+	String updated_at;			// 정보수정 날짜
+
+	String uuid;				//임시 비밀번호 발급용
+
+
 
 	public String getMember_id() {
 		return member_id;

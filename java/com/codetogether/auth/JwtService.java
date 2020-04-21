@@ -4,7 +4,7 @@ import java.util.Map;
 
 public interface JwtService {
 
-	public String createToken(String email);
+	String createToken(String email);
 
 	boolean ValidToken(String token) throws Exception;
 

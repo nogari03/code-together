@@ -1,4 +1,4 @@
-package com.codetogether.user;
+package com.codetogether.mail;
 
 import java.io.UnsupportedEncodingException;
 

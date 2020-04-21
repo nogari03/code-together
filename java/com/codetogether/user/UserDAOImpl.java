@@ -80,8 +80,9 @@ public class UserDAOImpl implements UserDAO {
 			return sql.selectOne("getBySnsNaver", vo.getNaver_email());
 		} else {
 			return sql.selectOne("getBySnsGoogle", vo.getGoogle_email());
+		}
 	}
-}
+
 	@Override
 	public void createNaver(UserVO vo) {
 		sql.insert("createNaver", vo);
@@ -98,44 +99,8 @@ public class UserDAOImpl implements UserDAO {
 	}
 
 	@Override
-	public void trans_teacher(UserVO vo) throws Exception {
-		try{
-			sql.update("trans_teacher", vo);
-		} catch (NullPointerException npe) {
-			throw new NullPointerException("NullPointerException");
-		} catch (Exception e) {
-			throw new Exception("알수없는 오류");
-		}
-	}
-	@Override
 	public UserVO selectOnlyEmail(UserVO vo) {
 		return sql.selectOne("selectOnlyEmail", vo);
-	}
-
-
-	@Transactional
-	@Override
-	public void createTeacherInfo(TeacherVO tvo) {
-		sql.insert("createTeacherInfo",tvo);
-
-	}
-
-	@Override
-	public TeacherVO selectTeacherInfo(TeacherVO tvo) throws Exception {
-
-		try{
-			sql.selectOne("selectTeacherInfo", tvo);
-		} catch (Exception e) {
-			throw new Exception();
-		}
-
-		return sql.selectOne("selectTeacherInfo", tvo);
-	}
-
-	@Transactional
-	@Override
-	public void updateTeacherInfo(TeacherVO tvo) {
-		sql.update("updateTeacherInfo",tvo);
 	}
 
 }
