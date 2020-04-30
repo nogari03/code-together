@@ -18,7 +18,7 @@
 
 ### 데모 영상(준비중)
 
-## 구현 기능
+### 구현 기능
 
  - Spring : 회원 관리 기능 및 로그인, JWT 인증서버 구축
  - Django : 강의 관리 기능 및 SSR(Server Side Rendering)
