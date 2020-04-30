@@ -29,3 +29,6 @@
 - Python, Django web framework
 - Java, Spring web framework(Spring mvc)
 - Vanilla JS & HTML & CSS
+
+## 개발일지
+[개발일지보러가기](https://drive.google.com/drive/folders/1yKNmgmrxBxYDD1Jmxjs-yKz5IRTFXKCK?usp=sharing)
