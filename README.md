@@ -1,4 +1,4 @@
-## CodeTogether 프로젝트 소개_Back-End
+## CodeTogether 프로젝트 소개 Back-End Spring
 
 ---
 
