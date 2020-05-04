@@ -17,11 +17,14 @@
 누구나 쉽고 빠르게 접근가능한 코딩교육의 실현
 
 ### 아키텍쳐
-![architecture][(https://github.com/nogari03/CodeTogether/blob/master/architecture.png?raw=true)
+
+![architecture](https://github.com/nogari03/CodeTogether/blob/master/architecture.png?raw=true)
 
 ### 데모 영상
-<iframe width="640" height="360" src="https://youtu.be/lEIVAddf9WU"  
- frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>  
+
+[![Video Label](http://img.youtube.com/vi/lEIVAddf9WU/0.jpg)](https://youtu.be/lEIVAddf9WU) 
+
+
 
 
 
@@ -38,4 +41,5 @@
 - Vanilla JS & HTML & CSS
 
 ## 개발일지
-[개발일지보러가기](https://drive.google.com/drive/folders/1yKNmgmrxBxYDD1Jmxjs-yKz5IRTFXKCK?usp=sharing)
+
+[개발일지보러가기](https://drive.google.com/drive/folders/1yKNmgmrxBxYDD1Jmxjs-yKz5IRTFXKCK?usp=sharing)https://drive.google.com/drive/folders/1yKNmgmrxBxYDD1Jmxjs-yKz5IRTFXKCK?usp=sharing)
