@@ -16,7 +16,14 @@
 
 누구나 쉽고 빠르게 접근가능한 코딩교육의 실현
 
-### 데모 영상(준비중)
+### 아키텍쳐
+![architecture][(https://github.com/nogari03/CodeTogether/blob/master/architecture.png?raw=true)
+
+### 데모 영상
+<iframe width="640" height="360" src="https://youtu.be/lEIVAddf9WU"  
+ frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>  
+
+
 
 ### 구현 기능
 
