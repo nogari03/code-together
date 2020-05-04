@@ -42,4 +42,4 @@
 
 ## 개발일지
 
-[개발일지보러가기](https://drive.google.com/drive/folders/1yKNmgmrxBxYDD1Jmxjs-yKz5IRTFXKCK?usp=sharing)https://drive.google.com/drive/folders/1yKNmgmrxBxYDD1Jmxjs-yKz5IRTFXKCK?usp=sharing)
+[개발일지보러가기](https://drive.google.com/drive/folders/1yKNmgmrxBxYDD1Jmxjs-yKz5IRTFXKCK?usp=sharing)
