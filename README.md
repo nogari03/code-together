@@ -10,7 +10,8 @@
 
 - 개발기간 : 2020/3/23 ~ 2020/4/17
 - 개발 인원 : 프론트엔드 2명, 백엔드 2명
-- 프론트엔드 [github](https://github.com/90factory/3rd_codeTogether_Frontend/)
+- 프론트엔드 [github 확인하기](https://github.com/90factory/3rd_codeTogether_Frontend/)
+- 장고 [github 확인하기](https://github.com/90factory/CodeTogether_Django/)
 
 ### 목적
 
