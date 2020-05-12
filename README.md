@@ -4,14 +4,14 @@
 
 코딩을 배우고 싶은 누구나를 대상으로 코딩교육 서비스인 [코드윙즈](https://www.codewings.org/)의 클론 프로젝트
 
-- [github 확인하기](https://github.com/90factory/3rd_CodeTogether_Spring/)
+- Spring [github](https://github.com/90factory/3rd_CodeTogether_Spring/)
+- Front-end [github](https://github.com/90factory/3rd_codeTogether_Frontend/)
+- Django [github](https://github.com/90factory/CodeTogether_Django/)
 
 ### 개발 인원 및 기간
 
 - 개발기간 : 2020/3/23 ~ 2020/4/17
 - 개발 인원 : 프론트엔드 2명, 백엔드 2명
-- 프론트엔드 [github 확인하기](https://github.com/90factory/3rd_codeTogether_Frontend/)
-- 장고 [github 확인하기](https://github.com/90factory/CodeTogether_Django/)
 
 ### 목적
 
@@ -19,7 +19,7 @@
 
 ### 아키텍쳐
 
-![architecture](https://github.com/nogari03/CodeTogether/blob/master/architecture.png?raw=true)
+![architecture](hhttps://github.com/nogari03/CodeTogether/blob/master/architecture.png)
 
 ### 데모 영상
 
