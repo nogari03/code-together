@@ -19,7 +19,7 @@
 
 ### 아키텍쳐
 
-![architecture](hhttps://github.com/nogari03/CodeTogether/blob/master/architecture.png)
+![architecture](https://github.com/nogari03/CodeTogether/blob/master/architecture.png)
 
 ### 데모 영상
 
