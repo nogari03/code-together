@@ -21,7 +21,7 @@
 
 ![architecture](https://github.com/nogari03/CodeTogether/blob/master/architecture.png)
 
-### 데모 영상
+### 데모 영상 (클릭)
 
 [![Video Label](http://img.youtube.com/vi/lEIVAddf9WU/0.jpg)](https://youtu.be/lEIVAddf9WU) 
 
